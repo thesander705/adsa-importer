@@ -4,7 +4,7 @@ namespace AdsaImporter.Models
 {
     class Product
     {
-        public int ProductNumber { get; set; }
+        public long ProductNumber { get; set; }
         public double Price { get; set; }
         public string Subcategory { get; set; }
         public string Category { get; set; }
