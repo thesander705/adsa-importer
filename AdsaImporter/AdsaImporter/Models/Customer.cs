@@ -6,7 +6,7 @@ namespace AdsaImporter.Models
     class Customer
     {
 
-        public int CustomerNumber { get; set; }
+        public long CustomerNumber { get; set; }
         public DateTime DateOfBirth { get; set; }
         public Gender Gender { get; set; }
         public string PlaceOfResidense { get; set; }

@@ -12,8 +12,8 @@ namespace AdsaImporter
         static void Main(string[] args)
         {
             Importer importer = new Importer();
+            List<Customer> customers = importer.ImportCustomers();
             List<Product> products = importer.ImportProducts();
-            importer.ImportProducts();
         }
     }
 }

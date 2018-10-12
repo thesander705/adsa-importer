@@ -24,11 +24,13 @@ namespace AdsaImporter
                     {
                         string[] values = line.Split(',');
 
-                        Product product = new Product();
-                        product.ProductNumber = CleanNumber(values[7]);
-                        product.Category = values[9];
-                        product.Subcategory = values[8];
-                        product.Price = Convert.ToDouble(values[11]) / Convert.ToDouble(values[10]);
+                        Product product = new Product
+                        {
+                            ProductNumber = CleanNumber(values[7]),
+                            Category = values[9],
+                            Subcategory = values[8],
+                            Price = Convert.ToDouble(values[11]) / Convert.ToDouble(values[10])
+                        };
 
                         products.Add(product);
                     }
@@ -45,8 +47,32 @@ namespace AdsaImporter
         public List<Customer> ImportCustomers()
         {
             List<Customer> customers = new List<Customer>();
+            using (StreamReader reader = new StreamReader(csvFile))
+            {
+                bool startImport = false;
+                while (!reader.EndOfStream)
+                {
+                    string line = reader.ReadLine();
+                    if (startImport)
+                    {
+                        string[] values = line.Split(',');
 
-            return customers;
+                        Customer customer = new Customer
+                        {
+                            CustomerNumber = Convert.ToInt64(CleanNumber(values[1])),
+                            DateOfBirth = DateTime.Parse(values[2]),
+                            Gender = CleanGender(values[3]),
+                            PlaceOfResidense = values[4]
+                        };
+                        customers.Add(customer);
+                    }
+
+                    startImport = true;
+                }
+            }
+
+            List<Customer> customersCleaned = customers.GroupBy(x => x.CustomerNumber).Select(y => y.First()).ToList();
+            return customersCleaned;
         }
 
         private long CleanNumber(string productNumber)
@@ -58,6 +84,21 @@ namespace AdsaImporter
             toReturn = toReturn.Replace('l', '1');
 
             return Convert.ToInt64(toReturn);
+        }
+
+        private Gender CleanGender(string gender)
+        {
+            if (gender == "Man")
+            {
+                return Gender.Male;
+            }
+
+            if (gender == "Woman")
+            {
+                return Gender.Female;
+            }
+
+            return Gender.Other;
         }
     }
 }
