@@ -13,7 +13,11 @@ namespace AdsaImporter
         {
             Importer importer = new Importer();
             Console.WriteLine("Start orders");
-            List<Order> orders = importer.ImportOrders();
+            List<Customer> customers = importer.ImportCustomers();
+            Exporter exporter = new Exporter();
+//            List<Product> products = importer.ImportProducts();
+            exporter.ExportCustomers(customers);
+//            List<Order> orders = importer.ImportOrders();
 
         }
     }

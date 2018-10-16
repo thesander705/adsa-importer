@@ -63,7 +63,7 @@ namespace AdsaImporter
                         Customer customer = new Customer
                         {
                             CustomerNumber = Convert.ToInt64(CleanNumber(values[1])),
-                            DateOfBirth = DateTime.Parse(values[2]),
+                            DateOfBirth = Convert.ToDateTime(values[2]),
                             Gender = CleanGender(values[3]),
                             PlaceOfResidense = values[4],
                             orders = new List<Order>()
