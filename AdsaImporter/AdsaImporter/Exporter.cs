@@ -51,7 +51,7 @@ namespace AdsaImporter
             foreach (Product product in products)
             {
                 comm.CommandText =
-                    "INSERT INTO `adsa`.`customer` (`ProductNumber`, `Price`, `SubCategory`, `Category`) VALUES (@ProductNumber, @Price, @SubCategory, @Category)";
+                    "INSERT INTO `adsa`.`Product` (`ProductNumber`, `Price`, `SubCategory`, `Category`) VALUES (@ProductNumber, @Price, @SubCategory, @Category)";
                 comm.Parameters.AddWithValue("@ProductNumber", product.ProductNumber);
                 comm.Parameters.AddWithValue("@Price", product.Price);
                 comm.Parameters.AddWithValue("@SubCategory", product.Subcategory);
