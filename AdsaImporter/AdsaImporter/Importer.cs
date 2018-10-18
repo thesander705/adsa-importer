@@ -122,11 +122,8 @@ namespace AdsaImporter
                 {
                     foreach (Product product in orderSameId.Products)
                     {
-                        if (order.Products.All(x => x.ProductNumber != product.ProductNumber))
-                        {
-                            product.orders.Add(order);
-                            order.Products.Add(product);
-                        }
+                        product.orders.Add(order);
+                        order.Products.Add(product);
                     }
                 }
             }
