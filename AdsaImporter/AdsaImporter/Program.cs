@@ -9,16 +9,16 @@ namespace AdsaImporter
     {
         static void Main(string[] args)
         {
-            WaitHandle[] waitHandles = {
-                new AutoResetEvent(false),
-                new AutoResetEvent(false)
-            };
-
-            ThreadPool.QueueUserWorkItem(DoCustomers, waitHandles[0]);
-            ThreadPool.QueueUserWorkItem(DoProducts, waitHandles[1]);
-
-
-            WaitHandle.WaitAll(waitHandles);
+//            WaitHandle[] waitHandles = {
+//                new AutoResetEvent(false),
+//                new AutoResetEvent(false)
+//            };
+//
+//            ThreadPool.QueueUserWorkItem(DoCustomers, waitHandles[0]);
+//            ThreadPool.QueueUserWorkItem(DoProducts, waitHandles[1]);
+//
+//
+//            WaitHandle.WaitAll(waitHandles);
 
             Importer importer = new Importer();
             Exporter exporter = new Exporter();
@@ -28,6 +28,13 @@ namespace AdsaImporter
 
             Console.WriteLine("Start exporting orders");
             exporter.ExportOrders(orders);
+            Console.WriteLine("Finished exporting orders");
+
+            Console.WriteLine("Start importing ProductOrder");
+            List<ProductOrder> productOrder = importer.ImportProductOrders();
+            Console.WriteLine("Start exporting ProductOrder");
+            exporter.ExportOrderProductRelations(productOrder);
+            Console.WriteLine("Finished exporting ProductOrder");
 
             Console.WriteLine("Finished");
             Console.ReadLine();

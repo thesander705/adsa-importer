@@ -82,8 +82,6 @@ namespace AdsaImporter
         public List<Order> ImportOrders()
         {
             List<Order> orders = new List<Order>();
-            List<Customer> customers = ImportCustomers();
-            List<Product> products = ImportProducts();
 
             using (StreamReader reader = new StreamReader(csvFile))
             {
@@ -104,11 +102,10 @@ namespace AdsaImporter
                             ActualDeliveryTime = CleanNumber(values[13]),
                             Rating = cleanRating(values[15]),
                             ReasonOfReturn = values[14],
-                            Customer = customers.FirstOrDefault(x => x.CustomerNumber == CleanNumber(values[1])),
-                            Products = new List<Product>()
+                            Customer = CleanNumber(values[1]),
+                            Products = new List<long>()
                         };
-                        order.Customer.orders.Add(order);
-                        order.Products.Add(products.FirstOrDefault(x => x.ProductNumber == CleanNumber(values[7])));
+                        order.Products.Add(CleanNumber(values[7]));
                         orders.Add(order);
                     }
 
@@ -116,21 +113,41 @@ namespace AdsaImporter
                 }
             }
 
-            foreach (Order order in orders)
-            {
-                foreach (Order orderSameId in orders.Where(x => x.OrderNumber == order.OrderNumber))
-                {
-                    foreach (Product product in orderSameId.Products)
-                    {
-                        product.orders.Add(order);
-                        order.Products.Add(product);
-                    }
-                }
-            }
-
             List<Order> ordersCleaned = orders.GroupBy(x => x.OrderNumber).Select(y => y.First()).ToList();
 
             return ordersCleaned;
+        }
+
+        public List<ProductOrder> ImportProductOrders()
+        {
+            List<ProductOrder> productOrders = new List<ProductOrder>();
+
+            using (StreamReader reader = new StreamReader(csvFile))
+            {
+                bool startImport = false;
+
+                while (!reader.EndOfStream)
+                {
+                    string line = reader.ReadLine();
+                    if (startImport)
+                    {
+                        string[] values = line.Split(',');
+
+                        ProductOrder productOrder = new ProductOrder()
+                        {
+                            Count = Convert.ToDouble(values[10]),
+                            OrderId = CleanNumber(values[5]),
+                            ProductId = CleanNumber(values[7])
+                        };
+
+                        productOrders.Add(productOrder);
+                    }
+
+                    startImport = true;
+                }
+            }
+
+            return productOrders;
         }
 
         private long CleanNumber(string productNumber)

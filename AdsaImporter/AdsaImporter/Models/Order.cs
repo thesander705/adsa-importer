@@ -11,7 +11,7 @@ namespace AdsaImporter.Models
         public long ActualDeliveryTime { get; set; }
         public string ReasonOfReturn { get; set; }
         public int? Rating { get; set; }
-        public Customer Customer { get; set; }
-        public List<Product> Products { get; set; }
+        public long Customer { get; set; }
+        public List<long> Products { get; set; }
     }
 }

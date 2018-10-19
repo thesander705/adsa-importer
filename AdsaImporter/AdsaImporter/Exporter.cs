@@ -87,18 +87,16 @@ namespace AdsaImporter
                 comm.Parameters.AddWithValue("@ActualDelivertTime", order.ActualDeliveryTime);
                 comm.Parameters.AddWithValue("@ReasonOfReturn", order.ReasonOfReturn);
                 comm.Parameters.AddWithValue("@Rating", order.Rating);
-                comm.Parameters.AddWithValue("@customerCustomerNumber", order.Customer.CustomerNumber);
+                comm.Parameters.AddWithValue("@customerCustomerNumber", order.Customer);
                 comm.ExecuteNonQuery();
                 comm.Parameters.Clear();
             }
 
             tr.Commit();
             conn.Close();
-
-            MakeOrderProductRelations(orders);
         }
 
-        private void MakeOrderProductRelations(List<Order> orders)
+        public void ExportOrderProductRelations(List<ProductOrder> productOrders)
         {
             MySqlTransaction tr = null;
 
@@ -111,27 +109,19 @@ namespace AdsaImporter
             tr = conn.BeginTransaction();
             comm.Transaction = tr;
 
-            foreach (Order order in orders)
+            foreach (ProductOrder productOrder in productOrders)
             {
-                List<Product> productsAdded = new List<Product>();
-                foreach (Product orderProduct in order.Products)
-                {
-                    if (productsAdded.Any(x => x.ProductNumber == orderProduct.ProductNumber))
-                    {
-                        continue;
-                    }
 
-                    int count = order.Products.Count(x => x.ProductNumber == orderProduct.ProductNumber);
 
-                    comm.CommandText =
-                        "INSERT INTO `adsa`.`Order_Product` (`OrderNumber`, `ProductNumber`, `Count`) VALUES (@OrderNumber, @ProductNumber, @Count)";
-                    comm.Parameters.AddWithValue("@OrderNumber", order.OrderNumber);
-                    comm.Parameters.AddWithValue("@ProductNumber", orderProduct.ProductNumber);
-                    comm.Parameters.AddWithValue("@Count", count);
-                    comm.ExecuteNonQuery();
-                    comm.Parameters.Clear();
-                }
+                comm.CommandText =
+                    "INSERT INTO `adsa`.`Order_Product` (`OrderNumber`, `ProductNumber`, `Count`) VALUES (@OrderNumber, @ProductNumber, @Count)";
+                comm.Parameters.AddWithValue("@OrderNumber", productOrder.OrderId);
+                comm.Parameters.AddWithValue("@ProductNumber", productOrder.ProductId);
+                comm.Parameters.AddWithValue("@Count", productOrder.Count);
+                comm.ExecuteNonQuery();
+                comm.Parameters.Clear();
             }
+
 
             tr.Commit();
             conn.Close();
