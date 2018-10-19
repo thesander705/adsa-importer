@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Text;
 using AdsaImporter.Models;
 using MySql.Data.MySqlClient;
 
@@ -64,67 +66,159 @@ namespace AdsaImporter
             conn.Close();
         }
 
+        //        public void ExportOrders(List<Order> orders)
+        //        {
+        //            MySqlTransaction tr = null;
+        //
+        //            string connStr =
+        //                "server=sanderdeboer.me;user=adsa;database=adsa;port=3306;password=Adsa1337!;SSL Mode=None;";
+        //            MySqlConnection conn = new MySqlConnection(connStr);
+        //            MySqlCommand comm = conn.CreateCommand();
+        //            conn.Open();
+        //
+        //            tr = conn.BeginTransaction();
+        //            comm.Transaction = tr;
+        //
+        //            foreach (Order order in orders)
+        //            {
+        //                comm.CommandText =
+        //                    "INSERT INTO `adsa`.`Order` (`OrderNumber`, `OrderDate`, `ExpectedDeliveryTime`, `ActualDelivertTime`, `ReasonOfReturn`, `Rating`, `customerCustomerNumber`) VALUES (@OrderNumber, @OrderDate, @ExpectedDeliveryTime, @ActualDelivertTime, @ReasonOfReturn, @Rating, @customerCustomerNumber)";
+        //                comm.Parameters.AddWithValue("@OrderNumber", order.OrderNumber);
+        //                comm.Parameters.AddWithValue("@OrderDate", order.OrderDate);
+        //                comm.Parameters.AddWithValue("@ExpectedDeliveryTime", order.ExpectedDeliveryTime);
+        //                comm.Parameters.AddWithValue("@ActualDelivertTime", order.ActualDeliveryTime);
+        //                comm.Parameters.AddWithValue("@ReasonOfReturn", order.ReasonOfReturn);
+        //                comm.Parameters.AddWithValue("@Rating", order.Rating);
+        //                comm.Parameters.AddWithValue("@customerCustomerNumber", order.Customer);
+        //                comm.ExecuteNonQuery();
+        //                comm.Parameters.Clear();
+        //            }
+        //
+        //            tr.Commit();
+        //            conn.Close();
+        //        }
+
         public void ExportOrders(List<Order> orders)
         {
-            MySqlTransaction tr = null;
+            orders = orders
+                .GroupBy(p => p.OrderNumber)
+                .Select(g => g.First())
+                .ToList();
 
-            string connStr =
-                "server=sanderdeboer.me;user=adsa;database=adsa;port=3306;password=Adsa1337!;SSL Mode=None;";
-            MySqlConnection conn = new MySqlConnection(connStr);
-            MySqlCommand comm = conn.CreateCommand();
-            conn.Open();
-
-            tr = conn.BeginTransaction();
-            comm.Transaction = tr;
-
-            foreach (Order order in orders)
+            string ConnectionString =
+                "server=localhost;user=adsa;database=adsa;port=3306;password=Adsa1337!;SSL Mode=None;Connection Timeout=400";
+            StringBuilder sCommand =
+                new StringBuilder(
+                    "INSERT INTO `adsa`.`Order` (`OrderNumber`, `OrderDate`, `ExpectedDeliveryTime`, `ActualDelivertTime`, `ReasonOfReturn`, `Rating`, `customerCustomerNumber`) VALUES ");
+            using (MySqlConnection mConnection = new MySqlConnection(ConnectionString))
             {
-                comm.CommandText =
-                    "INSERT INTO `adsa`.`Order` (`OrderNumber`, `OrderDate`, `ExpectedDeliveryTime`, `ActualDelivertTime`, `ReasonOfReturn`, `Rating`, `customerCustomerNumber`) VALUES (@OrderNumber, @OrderDate, @ExpectedDeliveryTime, @ActualDelivertTime, @ReasonOfReturn, @Rating, @customerCustomerNumber)";
-                comm.Parameters.AddWithValue("@OrderNumber", order.OrderNumber);
-                comm.Parameters.AddWithValue("@OrderDate", order.OrderDate);
-                comm.Parameters.AddWithValue("@ExpectedDeliveryTime", order.ExpectedDeliveryTime);
-                comm.Parameters.AddWithValue("@ActualDelivertTime", order.ActualDeliveryTime);
-                comm.Parameters.AddWithValue("@ReasonOfReturn", order.ReasonOfReturn);
-                comm.Parameters.AddWithValue("@Rating", order.Rating);
-                comm.Parameters.AddWithValue("@customerCustomerNumber", order.Customer);
-                comm.ExecuteNonQuery();
-                comm.Parameters.Clear();
-            }
+                int count = 0;
+                List<string> Rows = new List<string>();
 
-            tr.Commit();
-            conn.Close();
+                foreach (Order order in orders)
+                {
+                    string reasonOfreturn = "null";
+                    if (!string.IsNullOrEmpty(order.ReasonOfReturn))
+                    {
+                        reasonOfreturn = order.ReasonOfReturn;
+                    }
+
+                    string rating = "null";
+                    if (!string.IsNullOrEmpty(order.Rating.ToString()))
+                    {
+                        rating = order.Rating.ToString();
+                    }
+
+                    Rows.Add(string.Format(
+                        $"({order.OrderNumber}, \'{order.OrderDate.ToString("yyyy-MM-dd H:mm:ss")}\', {order.ExpectedDeliveryTime}, {order.ActualDeliveryTime}, \'{MySqlHelper.EscapeString(reasonOfreturn)}\', {rating}, {order.Customer})"));
+                    count++;
+                    if (count < 15000)
+                    {
+                        continue;
+                    }
+
+                    sCommand.Append(string.Join(",", Rows));
+                    sCommand.Append(";");
+                    mConnection.Open();
+                    using (MySqlCommand myCmd = new MySqlCommand(sCommand.ToString(), mConnection))
+                    {
+                        myCmd.CommandType = CommandType.Text;
+                        myCmd.ExecuteNonQuery();
+                    }
+                    mConnection.Close();
+                    sCommand =
+                        new StringBuilder(
+                            "INSERT INTO `adsa`.`Order` (`OrderNumber`, `OrderDate`, `ExpectedDeliveryTime`, `ActualDelivertTime`, `ReasonOfReturn`, `Rating`, `customerCustomerNumber`) VALUES ");
+
+                    Rows = new List<string>();
+
+                    count = 0;
+                }
+
+                sCommand.Append(string.Join(",", Rows));
+                sCommand.Append(";");
+                mConnection.Open();
+                using (MySqlCommand myCmd = new MySqlCommand(sCommand.ToString(), mConnection))
+                {
+                    myCmd.CommandType = CommandType.Text;
+                    myCmd.ExecuteNonQuery();
+                }
+                mConnection.Close();
+
+            }
         }
 
         public void ExportOrderProductRelations(List<ProductOrder> productOrders)
         {
-            MySqlTransaction tr = null;
-
-            string connStr =
-                "server=sanderdeboer.me;user=adsa;database=adsa;port=3306;password=Adsa1337!;SSL Mode=None;";
-            MySqlConnection conn = new MySqlConnection(connStr);
-            MySqlCommand comm = conn.CreateCommand();
-            conn.Open();
-
-            tr = conn.BeginTransaction();
-            comm.Transaction = tr;
-
-            foreach (ProductOrder productOrder in productOrders)
+            string ConnectionString =
+                "server=localhost;user=adsa;database=adsa;port=3306;password=Adsa1337!;SSL Mode=None;Connection Timeout=4000";
+            StringBuilder sCommand =
+                new StringBuilder(
+                    "INSERT INTO `adsa`.`order_product` (`OrderNumber`, `ProductNumber`, `Count`) VALUES ");
+            using (MySqlConnection mConnection = new MySqlConnection(ConnectionString))
             {
+                int count = 0;
+                List<string> Rows = new List<string>();
 
+                foreach (ProductOrder productOrder in productOrders)
+                {
+                    Rows.Add(string.Format(
+                        $"({productOrder.OrderId}, {productOrder.ProductId}, {productOrder.Count})"));
+                    count++;
+                    if (count < 10000)
+                    {
+                        continue;
+                    }
 
-                comm.CommandText =
-                    "INSERT INTO `adsa`.`Order_Product` (`OrderNumber`, `ProductNumber`, `Count`) VALUES (@OrderNumber, @ProductNumber, @Count)";
-                comm.Parameters.AddWithValue("@OrderNumber", productOrder.OrderId);
-                comm.Parameters.AddWithValue("@ProductNumber", productOrder.ProductId);
-                comm.Parameters.AddWithValue("@Count", productOrder.Count);
-                comm.ExecuteNonQuery();
-                comm.Parameters.Clear();
+                    sCommand.Append(string.Join(",", Rows));
+                    sCommand.Append(";");
+                    mConnection.Open();
+                    using (MySqlCommand myCmd = new MySqlCommand(sCommand.ToString(), mConnection))
+                    {
+                        myCmd.CommandType = CommandType.Text;
+                        myCmd.ExecuteNonQuery();
+                    }
+                    mConnection.Close();
+                    sCommand =
+                        new StringBuilder(
+                            "INSERT INTO `adsa`.`order_product` (`OrderNumber`, `ProductNumber`, `Count`) VALUES ");
+
+                    Rows = new List<string>();
+
+                    count = 0;
+                }
+
+                sCommand.Append(string.Join(",", Rows));
+                sCommand.Append(";");
+                mConnection.Open();
+                using (MySqlCommand myCmd = new MySqlCommand(sCommand.ToString(), mConnection))
+                {
+                    myCmd.CommandType = CommandType.Text;
+                    myCmd.ExecuteNonQuery();
+                }
+                mConnection.Close();
+
             }
-
-
-            tr.Commit();
-            conn.Close();
         }
     }
 }

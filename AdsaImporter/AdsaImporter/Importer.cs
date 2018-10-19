@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using AdsaImporter.Models;
+using MoreLinq;
 
 namespace AdsaImporter
 {
@@ -139,7 +140,6 @@ namespace AdsaImporter
                             OrderId = CleanNumber(values[5]),
                             ProductId = CleanNumber(values[7])
                         };
-
                         productOrders.Add(productOrder);
                     }
 
@@ -147,7 +147,10 @@ namespace AdsaImporter
                 }
             }
 
-            return productOrders;
+            List<ProductOrder> productOrdersCleaned = productOrders.DistinctBy(p => new { p.ProductId, p.OrderId}).ToList();
+
+           
+            return productOrdersCleaned;
         }
 
         private long CleanNumber(string productNumber)

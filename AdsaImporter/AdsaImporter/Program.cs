@@ -23,12 +23,12 @@ namespace AdsaImporter
             Importer importer = new Importer();
             Exporter exporter = new Exporter();
 
-            Console.WriteLine("Start importing orders");
-            List<Order> orders = importer.ImportOrders();
-
-            Console.WriteLine("Start exporting orders");
-            exporter.ExportOrders(orders);
-            Console.WriteLine("Finished exporting orders");
+//            Console.WriteLine("Start importing orders");
+//            List<Order> orders = importer.ImportOrders();
+//
+//            Console.WriteLine("Start exporting orders");
+//            exporter.ExportOrders(orders);
+//            Console.WriteLine("Finished exporting orders");
 
             Console.WriteLine("Start importing ProductOrder");
             List<ProductOrder> productOrder = importer.ImportProductOrders();
